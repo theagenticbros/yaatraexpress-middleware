@@ -28,17 +28,5 @@ export const logger = winston.createLogger({
         logFormat
       ),
     }),
-    // File output (for production monitoring)
-    new winston.transports.File({
-      filename: path.join('/app/logs', 'error.log'),
-      level: 'error',
-      maxsize: 10 * 1024 * 1024, // 10MB
-      maxFiles: 5,
-    }),
-    new winston.transports.File({
-      filename: path.join('/app/logs', 'combined.log'),
-      maxsize: 10 * 1024 * 1024,
-      maxFiles: 10,
-    }),
   ],
 });
