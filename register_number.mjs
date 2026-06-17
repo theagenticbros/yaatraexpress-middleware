@@ -1,16 +1,27 @@
-import { createClient } from '@supabase/supabase-js';
+import https from 'https';
 
-const supabase = createClient(
-  'https://eccvlpqxzobknkamgxnn.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjY3ZscHF4em9ia25rYW1neG5uIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQyMjM1NiwiZXhwIjoyMDk1OTk4MzU2fQ.H0bkWWVu9ilJTgrJeskyjLnjCmJP0vMTMwl5YIwWGhs'
-);
+const token = "EAAbO8XUAZCEMBRvxS3NvPZC7LwPleFZCIwFZCi9k3hhgziTZA3uhhDT243zoPA3ATg8bW4PAoMwZBjsykcy7ofmaECSABgJvzXojRudgkB5eHE6YL5ZAkQg6pwrBw8vvm71RSZAXr5oEUBOJcvM3e0FsESHFOlaKkMhZBtMfDdNcc4QyxR7PFFgIwiw80IHcy7QZDZD";
+const phoneId = "1111232138747481";
+const adminPhone = "919875667430";
 
-// Reset all leads to human_active=false so bot resumes
-const { data, error } = await supabase
-  .from('leads')
-  .update({ human_active: false, conversation_state: 'qualifying' })
-  .eq('phone_number', '916289191484')
-  .select();
+const body = JSON.stringify({
+  messaging_product: "whatsapp",
+  to: adminPhone,
+  type: "text",
+  text: { body: "🧪 Test admin notification from YaatraExpress bot" }
+});
 
-if (error) console.error('Error:', error.message);
-else console.log('✅ Lead reset:', data[0]?.phone_number, '| human_active:', data[0]?.human_active);
+const req = https.request({
+  hostname: 'graph.facebook.com',
+  path: `/v20.0/${phoneId}/messages`,
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+}, (res) => {
+  let d = ''; res.on('data', c => d += c);
+  res.on('end', () => {
+    console.log('Status:', res.statusCode);
+    console.log('Response:', d);
+  });
+});
+req.on('error', e => console.error(e.message));
+req.write(body); req.end();
