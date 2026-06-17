@@ -134,7 +134,7 @@ async function handleIncomingMessage(message, contacts) {
     // ── STEP 1: Load or create lead ──────────────────────────
     const lead = await getOrCreateLead(senderPhone, displayName);
 
-    // ── STEP 2: Human takeover — AI suppressed ───────────────
+    // ── STEP 2: Human takeover — AI suppressed ONLY if admin explicitly activated ──
     if (lead.human_active) {
       logger.info(`🙋 Human active for ${senderPhone} — saving message, AI skipped`);
       await saveMessage({
@@ -212,7 +212,9 @@ async function handleIncomingMessage(message, contacts) {
 
     if (triggerHandoff) {
       leadUpdates.conversation_state = 'human_handoff';
-      leadUpdates.human_active       = true;
+      // NOTE: We do NOT set human_active=true automatically.
+      // The bot keeps replying. Admin can manually set human_active=true
+      // in Supabase to fully take over the conversation.
     }
 
     if (Object.keys(leadUpdates).length > 0) {
@@ -248,23 +250,24 @@ async function handleIncomingMessage(message, contacts) {
 
 // ── Human Handoff Notification ────────────────────────────────
 async function triggerHumanHandoff(lead, customerPhone, triggerMessage) {
-  const HUMAN_PHONE = process.env.HUMAN_PHONE || '917278802692';
+  const HUMAN_PHONE = process.env.HUMAN_PHONE || '919875667430';
 
   const notification =
-`🚨 *New Customer Request — Action Needed*
+`🚨 *New Lead Needs Attention — YaatraExpress*
 
 👤 *Customer:* ${lead.full_name || lead.display_name || 'Unknown'}
-📱 *Phone:* +${customerPhone}
+📱 *WhatsApp:* +${customerPhone}
 🏔️ *Trek Interest:* ${lead.interested_trek_name || 'Not specified'}
 👥 *Group Size:* ${lead.group_size || 'Not specified'}
 📅 *Travel Date:* ${lead.preferred_date || 'Not specified'}
 📍 *Pickup:* ${lead.pickup_city || 'Not specified'}
+📝 *Special Req:* ${lead.special_requirements || 'None'}
 
-💬 *Their message:*
+💬 *Their last message:*
 "${triggerMessage}"
 
-➡️ Please reply to this customer on WhatsApp directly.
-_(Shrish AI is now paused for this customer)_`;
+➡️ *Action needed:* Reply to this customer on WhatsApp directly at +${customerPhone}
+_(Shrish AI is still handling the chat but flagged this for your attention)_`;
 
   try {
     await sendMessage(HUMAN_PHONE, notification);
