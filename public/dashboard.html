@@ -248,12 +248,20 @@ aside{width:320px;background:var(--surface);border-right:1px solid var(--border)
 <div id="toast"></div>
 
 <script>
-let KEY = '';
+let KEY = localStorage.getItem('dashboard_key') || '';
 let leads = [];
 let activeLeadId = null;
 let activeLead = null;
 let filterState = 'all';
+let messageCount = 0;
 let isMobile = () => window.innerWidth <= 768;
+
+window.onload = () => {
+  if (KEY) {
+    document.getElementById('pwdInput').value = KEY;
+    doLogin();
+  }
+};
 
 function autoResize(el) {
   el.style.height = 'auto';
@@ -267,12 +275,18 @@ function doLogin() {
   fetch('/api/stats?key=' + KEY)
     .then(r => r.json())
     .then(d => {
-      if (!d.success) { document.getElementById('loginErr').textContent = 'Wrong password'; return; }
+      if (!d.success) { 
+        document.getElementById('loginErr').textContent = 'Wrong password'; 
+        localStorage.removeItem('dashboard_key');
+        return; 
+      }
+      localStorage.setItem('dashboard_key', KEY);
       document.getElementById('login').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       refreshAll();
       setInterval(refreshLeads, 15000);
       setInterval(loadStats, 30000);
+      setInterval(() => { if (activeLeadId) loadMessages(activeLeadId, true); }, 3000);
     })
     .catch(() => document.getElementById('loginErr').textContent = 'Connection error');
 }
@@ -352,6 +366,7 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 async function openLead(id) {
   activeLeadId = id;
   activeLead = leads.find(l => l.id === id);
+  messageCount = 0;
   renderLeads();
 
   // On mobile: hide sidebar, show chat
@@ -405,10 +420,16 @@ function updateChatHeader(lead) {
     : '<span style="color:var(--muted)">No details collected yet</span>';
 }
 
-async function loadMessages(leadId) {
+async function loadMessages(leadId, isPolling=false) {
   const d = await apiFetch(`/api/leads/${leadId}/conversation`);
   if (!d?.data) return;
+  
+  if (isPolling && d.data.length === messageCount) return;
+  messageCount = d.data.length;
+
   const el = document.getElementById('messages');
+  const isScrolledToBottom = el.scrollHeight - el.clientHeight <= el.scrollTop + 50;
+
   if (!d.data.length) {
     el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:32px">No messages yet</div>';
     return;
@@ -426,7 +447,10 @@ async function loadMessages(leadId) {
       <div class="msg-time">${time}</div>
     </div>`;
   }).join('');
-  el.scrollTop = el.scrollHeight;
+  
+  if (!isPolling || isScrolledToBottom) {
+    el.scrollTop = el.scrollHeight;
+  }
 }
 
 async function takeover() {
