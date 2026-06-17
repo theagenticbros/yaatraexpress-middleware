@@ -7,20 +7,20 @@ import './env.js';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { webhookRouter } from './routes/webhook.js';
 import { dashboardRouter } from './routes/dashboard.js';
 import { logger } from './services/logger.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
 // ── Middleware ───────────────────────────────────────────────
-app.use(cors({
-  origin:      process.env.DASHBOARD_URL
-                 ? [process.env.DASHBOARD_URL, 'http://localhost:3000']
-                 : ['http://localhost:3000', 'http://127.0.0.1:3000'],
-  credentials: true,
-}));
+app.use(cors({ origin: '*', credentials: false }));
+app.use(express.static(join(__dirname, '../public')));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('combined', { stream: { write: (msg) => logger.info(msg.trim()) } }));
@@ -39,6 +39,11 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
     uptime:    process.uptime(),
   });
+});
+
+// ── Dashboard HTML ───────────────────────────────────────────
+app.get('/dashboard', (_req, res) => {
+  res.sendFile(join(__dirname, '../public/dashboard.html'));
 });
 
 // ── 404 Fallback ─────────────────────────────────────────────

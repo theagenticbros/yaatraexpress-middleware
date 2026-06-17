@@ -24,12 +24,9 @@ function getGroqClient() {
 export async function runAgent(customerMessage, conversationHistory, trekContext, lead) {
   const startTime = Date.now();
 
-  // Detect language from this message + recent history
-  const recentMessages = conversationHistory
-    .slice(-5)
-    .map((m) => m.message_content)
-    .join(' ');
-  const detectedLanguage = detectLanguage(customerMessage + ' ' + recentMessages);
+  // Detect language from CURRENT message only (not history)
+  // This ensures English messages get English replies even in Hindi conversations
+  const detectedLanguage = detectLanguage(customerMessage);
 
   // Build the system prompt (Shrish's full context)
   const systemPrompt = buildSystemPrompt(trekContext, lead, detectedLanguage);
