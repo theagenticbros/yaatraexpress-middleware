@@ -65,14 +65,13 @@ webhookRouter.get('/', (req, res) => {
 
 // ── POST /webhook — All incoming Meta events ──────────────────
 webhookRouter.post('/', async (req, res) => {
-  // Acknowledge immediately — Meta requires fast 200 or it retries
-  res.status(200).send('EVENT_RECEIVED');
-
   try {
     const body = req.body;
 
     // Guard: only process WhatsApp Business Account events
-    if (body?.object !== 'whatsapp_business_account') return;
+    if (body?.object !== 'whatsapp_business_account') {
+      return res.status(200).send('EVENT_RECEIVED');
+    }
 
     for (const entry of body.entry || []) {
       for (const change of entry.changes || []) {
@@ -98,8 +97,11 @@ webhookRouter.post('/', async (req, res) => {
       }
     }
   } catch (err) {
-    logger.error('❌ Webhook error:', err.message);
+    logger.error('❌ Webhook top-level error:', err.message);
   }
+
+  // Respond AFTER processing so Vercel keeps the function alive
+  return res.status(200).send('EVENT_RECEIVED');
 });
 
 // ── Core Message Handler ──────────────────────────────────────
