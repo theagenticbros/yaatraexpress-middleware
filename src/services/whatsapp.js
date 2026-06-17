@@ -6,19 +6,21 @@
 import axios from 'axios';
 import { logger } from './logger.js';
 
-const ACCESS_TOKEN  = process.env.META_ACCESS_TOKEN;
-const PHONE_ID      = process.env.META_PHONE_NUMBER_ID;
-const API_VERSION   = 'v20.0';
+const API_VERSION = 'v20.0';
 
-// Base client pointed at THIS phone number's endpoint
-const metaClient = axios.create({
-  baseURL: `https://graph.facebook.com/${API_VERSION}/${PHONE_ID}`,
-  headers: {
-    'Authorization': `Bearer ${ACCESS_TOKEN}`,
-    'Content-Type':  'application/json',
-  },
-  timeout: 30000,
-});
+// Build client dynamically so env vars are always fresh
+function getMetaClient() {
+  const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
+  const PHONE_ID     = process.env.META_PHONE_NUMBER_ID;
+  return axios.create({
+    baseURL: `https://graph.facebook.com/${API_VERSION}/${PHONE_ID}`,
+    headers: {
+      'Authorization': `Bearer ${ACCESS_TOKEN}`,
+      'Content-Type':  'application/json',
+    },
+    timeout: 30000,
+  });
+}
 
 // ── Send Text Message ─────────────────────────────────────────
 /**
@@ -30,7 +32,7 @@ export async function sendMessage(to, message) {
   const phone = cleanPhone(to);
 
   try {
-    const response = await metaClient.post('/messages', {
+    const response = await getMetaClient().post('/messages', {
       messaging_product: 'whatsapp',
       recipient_type:    'individual',
       to:                phone,
@@ -57,7 +59,7 @@ export async function sendMessage(to, message) {
  */
 export async function markAsRead(messageId) {
   try {
-    await metaClient.post('/messages', {
+    await getMetaClient().post('/messages', {
       messaging_product: 'whatsapp',
       status:            'read',
       message_id:        messageId,
@@ -85,6 +87,8 @@ export async function sendTypingIndicator(_chatId, _typing) {
  */
 export async function getSessionStatus() {
   try {
+    const PHONE_ID = process.env.META_PHONE_NUMBER_ID;
+    const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
     const resp = await axios.get(
       `https://graph.facebook.com/${API_VERSION}/${PHONE_ID}`,
       { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } }

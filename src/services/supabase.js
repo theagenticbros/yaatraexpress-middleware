@@ -3,17 +3,11 @@
 // All database reads and writes for the AI agent
 // ============================================================
 import { createClient } from '@supabase/supabase-js';
-import WebSocket from 'ws';
 import { logger } from './logger.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY,
-  {
-    realtime: {
-      transport: WebSocket
-    }
-  }
+  process.env.SUPABASE_SERVICE_KEY
 );
 
 // ── LEADS ────────────────────────────────────────────────────
