@@ -7,8 +7,11 @@ import { buildSystemPrompt } from './systemPrompt.js';
 import { detectLanguage } from './languageDetector.js';
 import { logger } from '../services/logger.js';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+
+function getGroqClient() {
+  return new Groq({ apiKey: process.env.GROQ_API_KEY });
+}
 
 /**
  * Main AI agent call — returns Shrish's reply + extracted data
@@ -49,7 +52,7 @@ export async function runAgent(customerMessage, conversationHistory, trekContext
 
   let rawResponse;
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await getGroqClient().chat.completions.create({
       model: MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
