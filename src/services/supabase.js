@@ -182,8 +182,11 @@ export async function getTrekContext(trekId) {
     supabase
       .from('faq_knowledge')
       .select('*')
+      // Trek-specific FAQs first, then global ones; load enough for the
+      // enriched per-trek knowledge base (place info, reach, rentals, etc.)
       .or(`trek_id.eq.${trekId},trek_id.is.null`)
-      .limit(15),
+      .order('trek_id', { ascending: true, nullsFirst: false })
+      .limit(40),
   ]);
 
   return {

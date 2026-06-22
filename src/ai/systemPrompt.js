@@ -137,7 +137,7 @@ function formatTrekKnowledge(trekContext) {
     .join('\n') || '  Itinerary details available on request';
 
   const faqText = faqs
-    ?.slice(0, 5)
+    ?.slice(0, 14)
     .map((f) => `  Q: ${f.question}\n  A: ${f.answer}`)
     .join('\n\n') || '';
 
