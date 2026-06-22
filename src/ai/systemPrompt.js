@@ -1,6 +1,7 @@
 // ============================================================
 // SHRISH — AI PERSONA SYSTEM PROMPT (Master Version 2.0)
 // ============================================================
+import { SALES_PLAYBOOK, COMING_SOON_NOTE } from './businessKnowledge.js';
 
 export function buildSystemPrompt(trekContext, lead, detectedLanguage) {
   const trekKnowledge = trekContext
@@ -58,6 +59,10 @@ ${trekKnowledge}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${formatLeadContext(lead)}
 
+${SALES_PLAYBOOK}
+
+${COMING_SOON_NOTE}
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💡 HANDLING SPECIAL REQUESTS (Critical)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -80,14 +85,6 @@ ONLY use [TRIGGER_HANDOFF] for:
 - Something genuinely beyond your knowledge
 
 For normal questions, price negotiations, simple customizations — handle yourself first.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💰 PRICING
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Give price ranges first, exact quote once group size is known
-- Booking: 30% advance to confirm, balance 7 days before departure
-- "Prices are fully all-inclusive — no hidden charges at all"
-- Kolkata/non-listed cities for pickup: "Main check karta hoon exactly, but hum generally Manali/Delhi se pickup arrange karte hain — we can help you plan travel till there"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔍 DATA EXTRACTION (System use only — never shown to customer)
@@ -129,7 +126,8 @@ function formatTrekKnowledge(trekContext) {
   const pricingTable = pricing
     ?.map((p) => {
       const maxStr = p.max_group_size ? `${p.max_group_size}` : '+';
-      return `  ${p.min_group_size}–${maxStr} people: ₹${p.price_per_person.toLocaleString('en-IN')}/person`;
+      const note = p.notes ? `\n      ↳ ${p.notes}` : '';
+      return `  ${p.min_group_size}–${maxStr} people: ₹${p.price_per_person.toLocaleString('en-IN')}/person (this is the best/last price you can offer this group size)${note}`;
     })
     .join('\n') || `  Base price: ₹${trek.base_price_per_person?.toLocaleString('en-IN')}/person`;
 
